@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <h2>Task Management Dashboard</h2>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </header>
+
+        <!-- Form for adding tasks via AJAX -->
+        <form id="task-form">
+            <input type="text" id="task-title" placeholder="Enter new task..." required>
+            <button type="submit">Add Task</button>
+        </form>
+
+        <hr>
+
+        <h3>Your Tasks</h3>
+        <ul id="task-list">
+            {% for task in tasks %}
+                <li>
+                    <span><strong>{{ task[1] }}</strong></span>
+                    <span class="status {{ task[2]|lower }}">{{ task[2] }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- JavaScript for AJAX Request -->
+    <script>
+        document.getElementById('task-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent full page reload
+
+            const titleInput = document.getElementById('task-title');
+            const title = titleInput.value;
+
+            fetch('/add_task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title: title })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Dynamically append the new task to the UI list
+                    const taskList = document.getElementById('task-list');
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span><strong>${data.task.title}</strong></span> <span class="status pending">${data.task.status}</span>`;
+                    taskList.appendChild(li);
+
+                    // Clear input field
+                    titleInput.value = '';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
